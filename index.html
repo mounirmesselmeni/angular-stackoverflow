@@ -1,0 +1,203 @@
+<html lang="en" ng-app="soApp"><head>
+	<title>Stackoverflow API demo with AngularJS</title>
+
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="author" content="mounir">
+	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+	<link rel="icon" href="favicon.ico" type="image/x-icon">
+
+	<link href="static/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+	<link rel="stylesheet" id="Pacifico-css" href="http://fonts.googleapis.com/css?family=Pacifico&amp;ver=3.4.2" type="text/css" media="all">
+
+	<link href="http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,900,400italic" rel="stylesheet" type="text/css">
+	<link href="http://fonts.googleapis.com/css?family=Open+Sans:400,700italic,600italic,400italic,300italic,800,700,600,300|Open+Sans+Condensed:300,700,300italic|Fredericka+the+Great" rel="stylesheet" type="text/css">
+	<style type="text/css">
+	  body {
+		padding-top: 20px;
+		padding-bottom: 40px;
+	  }
+
+	  /* Custom container */
+	  .container-narrow {
+		margin: 0 auto;
+		max-width: 90%;
+	  }
+	  .container-narrow > hr {
+		margin: 30px 0;
+	  }
+
+	  /* Main marketing message and sign up button */
+	  .jumbotron {
+		margin: 60px 0;
+		text-align: center;
+	  }
+	  .jumbotron h1 {
+		font-size: 72px;
+		line-height: 1;
+	  }
+	  .jumbotron .btn {
+		font-size: 21px;
+		padding: 14px 24px;
+	  }
+
+	  .jumbotron2 {
+		margin: 60px 0;
+		text-align: center;
+	  }
+	  .jumbotron2 h1 {
+		font-size: 72px;
+		line-height: 1;
+	  }
+	  .jumbotron2 .btn {
+		font-size: 21px;
+		padding: 14px 24px;
+	  }
+
+	  /* Supporting marketing content */
+	  .marketing {
+		margin: 60px 0;
+	  }
+	  .marketing p + h4 {
+		margin-top: 28px;
+	  }
+	  span.label-info{
+		margin-right: 5px;
+	  }
+	</style>
+
+<body ng-controller="MainController">
+	<div class="container-narrow">
+		<div style="width: 100%;">
+			<div class="row-fluid">
+			<div class="span4">
+				<a href="http://www.stackoverflox.com"><img src="static/img/stackoverflow-logo.png" width="250px"></a>
+			</div>
+			<div class="span4 masthead" style="text-align: center;">
+				<h1 class="muted">API powered by</h1>
+			</div>
+			<div class="pull-right">
+				<a href="http://www.angularjs.org">
+					<img src="static/img/angular.png" width="100px">
+				</a>
+			</div>
+			</div>
+		</div>
+
+		<div class="jumbotron" ng-show="!questions && !loading">
+			<h1>Enter user id to fetch informations</h1>
+			<p class="lead">
+				<input type="text" placeholder="userId" class="input-xlarge" style="height: 40px; font-size: 20px;" ng-model="user">
+			</p>
+			<a class="btn btn-large btn-success" href="#" ng-click="submit()">
+		 		Load Informations
+			</a>
+		</div>
+
+		<div ng-show="loading" class="progress progress-striped active" style="margin-top:20px; width: 20%;margin-left:auto;margin-right:auto;">
+			<div class="bar" style="width: 100%;"></div>
+		</div>
+
+		<hr>
+
+		<div class="row-fluid" style="margin-top: -30px;" ng-show="questions && answers && !loading">
+			<div class="span4">
+				<h2>Questions</h2>
+				<button class="btn btn-small btn-info" ng-disabled="currentQuestionsPage == 0" ng-click="currentQuestionsPage=currentQuestionsPage-1">
+				  Previous
+				</button>
+				{{currentQuestionsPage+1}}/{{numberOfQuestionsPages()}}
+				<button class="btn btn-small btn-info" ng-disabled="currentQuestionsPage+2 > numberOfQuestionsPages()" ng-click="currentQuestionsPage=currentQuestionsPage+1">
+				  Next
+				</button>
+				<div class="span12">
+					<span ng-repeat="item in questions| startFrom:currentQuestionsPage*pageQuestionsSize | limitTo:pageQuestionsSize">
+						<h4>
+							<a href="http://stackoverflow.com/q/{{ item.question_id }}">{{ item.title }}</a>
+						</h4>
+						<p>
+							Tags:
+							<span class="label label-info" ng-repeat="tag in item.tags">{{ tag }}</span>
+						</p>
+						<p>
+							View count : 
+							<span class="badge badge-important">{{ item.view_count }}</span>
+						</p>
+						<p> Is answered: {{ item.is_answered }}</p>
+						<p> Answer count: {{ item.answer_count }}</p>
+					</span>
+				</div>
+			</div>
+			<div class="span4" style="text-align: center;">
+				<h2>
+					SO User: <a href="{{questions[0].owner.link}}">{{ questions[0].owner.display_name }}</a>
+				</h2>
+				<h2 class="muted">
+					Reputation: {{ questions[0].owner.reputation }}
+				</h2>
+				<p ng-show="questions">
+					<img ng-show="questions" ng-src="{{ questions[0].owner.profile_image }}">
+				</p>
+				<p class="lead" ng-show="questions">
+					Questions: {{ questions.length }}
+				</p>
+				<p class="lead" ng-show="answers">
+					Answers: {{ answers.length }}
+				</p>
+			</div>
+			<div class="span4">
+				<h2>Answers</h2>
+				<button class="btn btn-small btn-info" ng-disabled="currentAnswersPage == 0" ng-click="currentAnswersPage=currentAnswersPage-1">
+				  Previous
+				</button>
+				{{currentAnswersPage+1}}/{{numberOfAnswersPages()}}
+				<button class="btn btn-small btn-info" ng-disabled="currentAnswersPage+2 > numberOfAnswersPages()" ng-click="currentAnswersPage=currentAnswersPage+1">
+				  Next
+				</button>
+				<div class="span12">
+					<span ng-repeat="item in answers | startFrom:currentAnswersPage*pageAnswersSize | limitTo:pageAnswersSize">
+						<h4>
+							<a href="http://stackoverflow.com/q/{{ item.question_id }}">
+								<i class="icon-ok" ng-show="item.is_accepted"></i>
+								<i class="icon-remove" ng-show="!item.is_accepted"></i>
+								Question: {{ item.question_id }}
+							</a>
+						</h4>
+						<p>
+							<a href="http://stackoverflow.com/a/{{ item.answer_id }}">
+								Answer: {{ item.answer_id }}
+							</a>
+						</p>
+						<p>
+							Is accepted: {{ item.is_accepted }}
+						</p>
+						<p>
+							{{ item.creation_date }}
+						</p>
+						<p>
+							Score : 
+							<span class="badge badge-warning">{{ item.score }}</span>
+						</p>
+					</span>
+				</div>
+			</div>
+
+		</div>
+
+		<hr>
+		<div class="footer" style="text-align: center;">
+			<p>
+				© Mounir 2013
+			</p>
+		</div>
+
+	</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.7/angular.min.js"></script>
+	<script src="static/bootstrap/js/bootstrap.min.js"></script>
+	<script src="static/js/controller.js"></script>
+
+</body>
+</html>
